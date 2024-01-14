@@ -18,6 +18,7 @@ const HELP_MSG: &str = "Usage: -j to select how many threads you want
 
 
 impl Arguments {
+    
     fn new(args: &[String]) -> Result<Arguments, &'static str> {
         if args.len() < 2 {
             return Err("less args than expected");
@@ -28,9 +29,10 @@ impl Arguments {
         }
 
         let flag = args[1].clone();
+
         
         if let Ok(ipaddr) = IpAddr::from_str(&flag) {
-            return Ok(Arguments { ipaddr: ipaddr, threads: 4});
+            return Ok(Arguments { ipaddr, threads: 4});
         }
 
         if flag.contains("-h") || flag.contains("-help") && args.len() == 2 {
@@ -38,23 +40,26 @@ impl Arguments {
             return Err("help");
         }
         
-        if flag.contains("-h") || flag.contains("--helo") {
+        if flag.contains("-h") || flag.contains("--help") {
             return Err(ERR_MSG);
         }
         
         if flag.contains("-j") {
+        
             let ipaddr = match IpAddr::from_str(&args[3]) {
                 Ok(s) => s,
                 Err(_) => return Err("not a valid IPADDR; must be IPv4 or IPv6")
             };
+
             let threads = match args[2].parse::<u16>() {
                 Ok(s) => s,
                 Err(_) => return Err("failed to parse thread number")
             };
-            return Ok(Arguments { ipaddr: ipaddr, threads: threads });
+            return Ok(Arguments { ipaddr, threads });
         }
         return Err("Invalid syntax");
     }
+
 }
 
 fn scan(tx: Sender<u16>, start_port: u16, addr: IpAddr, num_threads: u16) {
@@ -82,10 +87,9 @@ fn main() {
         |err| {
             if err.contains("help") {
                 process::exit(0)
-            } else {
-                eprintln!("{} problem parsing args: {}", program, err);
-                process::exit(0);
             }
+            eprintln!("{} problem parsing args: {}", program, err);
+            process::exit(0);
         }
     );
 
@@ -98,6 +102,7 @@ fn main() {
             scan(tx, i, args.ipaddr.clone(), num_threads);
         });
     }
+
     let mut out = vec![];
     drop(tx);
     for p in rx {
