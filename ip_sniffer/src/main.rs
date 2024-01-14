@@ -13,6 +13,8 @@ struct Arguments {
 
 const MAX: u16 = 65535;
 const ERR_MSG: &str = "Too Many args";
+const HELP_MSG: &str = "Usage: -j to select how many threads you want
+\r\n       -h or -help to show this help message.";
 
 
 impl Arguments {
@@ -20,34 +22,38 @@ impl Arguments {
         if args.len() < 2 {
             return Err("less args than expected");
         }
+
         if args.len() > 4 {
             return Err(ERR_MSG);
         }
-        let f = args[1].clone();
-        if let Ok(ipaddr) = IpAddr::from_str(&f) {
+
+        let flag = args[1].clone();
+        
+        if let Ok(ipaddr) = IpAddr::from_str(&flag) {
             return Ok(Arguments { ipaddr: ipaddr, threads: 4});
-        } else {
-            let flag = args[1].clone();
-            if flag.contains("-h") || flag.contains("-help") && args.len() == 2 {
-                println!("Usage: -j to select how many threads you want
-                \r\n       -h or -help to show this help message.");
-                return Err("help");
-            } else if flag.contains("-h") || flag.contains("--helo") {
-                return Err(ERR_MSG);
-            } else if flag.contains("-j") {
-                let ipaddr = match IpAddr::from_str(&args[3]) {
-                    Ok(s) => s,
-                    Err(_) => return Err("not a valid IPADDR; must be IPv4 or IPv6")
-                };
-                let threads = match args[2].parse::<u16>() {
-                    Ok(s) => s,
-                    Err(_) => return Err("failed to parse thread number")
-                };
-                return Ok(Arguments { ipaddr: ipaddr, threads: threads });
-            } else {
-                return Err("Invalid syntax");
-            }
         }
+
+        if flag.contains("-h") || flag.contains("-help") && args.len() == 2 {
+            println!("{}", HELP_MSG);
+            return Err("help");
+        }
+        
+        if flag.contains("-h") || flag.contains("--helo") {
+            return Err(ERR_MSG);
+        }
+        
+        if flag.contains("-j") {
+            let ipaddr = match IpAddr::from_str(&args[3]) {
+                Ok(s) => s,
+                Err(_) => return Err("not a valid IPADDR; must be IPv4 or IPv6")
+            };
+            let threads = match args[2].parse::<u16>() {
+                Ok(s) => s,
+                Err(_) => return Err("failed to parse thread number")
+            };
+            return Ok(Arguments { ipaddr: ipaddr, threads: threads });
+        }
+        return Err("Invalid syntax");
     }
 }
 
